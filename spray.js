@@ -32,7 +32,7 @@ function getKey(record) {
 
 var ensuredDirs = {};
 
-function outStream(key, done) {
+function openKeyStream(key, done) {
     var keyPath = path.join.apply(path, key);
     var outPath = path.join(outBase, keyPath);
     var dirPath = path.dirname(outPath);
@@ -62,7 +62,7 @@ process.stdin
         var key = getKey(record);
         var stream = keyStreams.get(key);
         if (stream !== undefined) return done(null, stream);
-        outStream(key, under(done, function(stream) {
+        openKeyStream(key, under(done, function(stream) {
             keyStreams.set(key, stream);
             stream.write(JSON.stringify(record) + '\n');
         }));
