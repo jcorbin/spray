@@ -42,6 +42,15 @@ function createDerpStream(outPath, opts, done) {
     finish();
 }
 
+function wrapStream(stream) {
+    var ser = through2.obj(function(obj, _, done) {
+        this.push(JSON.stringify(obj) + '\n');
+        done();
+    });
+    ser.pipe(stream);
+    return ser;
+}
+
 function openKeyStream(key, done) {
     var keyPath = path.join.apply(path, key);
     var outPath = path.join(outBase, keyPath);
@@ -63,8 +72,9 @@ process.stdin
         var stream = keyStreams.get(key);
         if (stream !== undefined) return done(null, stream);
         openKeyStream(key, under(done, function(stream) {
+            stream = wrapStream(stream);
             keyStreams.set(key, stream);
-            stream.write(JSON.stringify(record) + '\n');
+            stream.write(record);
         }));
     }))
     ;
