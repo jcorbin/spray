@@ -43,7 +43,6 @@ function outStream(key, done) {
         ensuredDirs[dirPath] = true;
         stream = fs.createWriteStream(outPath, {flags: 'a'});
         outStreams.set(key, stream) ;
-        console.log(Date.now(), outStreams.keys().length);
         done(null, stream);
     }
 }
