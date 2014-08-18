@@ -67,7 +67,11 @@ var keyStreams = LRU({
 process.stdin
     .pipe(linestream())
     .pipe(through2.obj(function(line, enc, done) {
-        safeParse(line, under(done, this.push.bind(this)));
+        safeParse(line, under(done, function(record) {
+            if (record !== null && record !== undefined) {
+                this.push(record);
+            }
+        }));
     }))
     .pipe(SprayStream(function(record, done) {
         var key = getKey(record);
