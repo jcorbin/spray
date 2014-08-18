@@ -32,20 +32,20 @@ function getKey(record) {
 
 var ensuredDirs = {};
 
-function openKeyStream(key, done) {
-    var keyPath = path.join.apply(path, key);
-    var outPath = path.join(outBase, keyPath);
+function createDerpStream(outPath, opts, done) {
     var dirPath = path.dirname(outPath);
     var finish = under(done, function() {
         ensuredDirs[dirPath] = true;
-        stream = fs.createWriteStream(outPath, {flags: 'a'});
-        retrun stream;
+        return fs.createWriteStream(outPath, opts);
     });
-    if (ensuredDirs[dirPath]) {
-        finish();
-    } else {
-        mkdirp(dirPath, finish);
-    }
+    if (!ensuredDirs[dirPath]) return mkdirp(dirPath, finish);
+    finish();
+}
+
+function openKeyStream(key, done) {
+    var keyPath = path.join.apply(path, key);
+    var outPath = path.join(outBase, keyPath);
+    createDerpStream(outPath, {flags: 'a'}, done);
 }
 
 var keyStreams = LRU({
