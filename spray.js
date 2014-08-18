@@ -20,6 +20,16 @@ var fields = args._;
 
 var n = fields.length;
 
+function getKey(record) {
+    var key = new Array(n);
+    for (var i=0; i<n; i++) {
+        var field = fields[i];
+        key[i] = '' + record[field];
+        if (prune) delete record[field];
+    }
+    return key;
+}
+
 var outStreams = LRU({
     max: 200,
     dispose: function(key, stream) {stream.close();}
@@ -45,16 +55,6 @@ function outStream(key, done) {
         outStreams.set(key, stream) ;
         done(null, stream);
     }
-}
-
-function getKey(record) {
-    var key = new Array(n);
-    for (var i=0; i<n; i++) {
-        var field = fields[i];
-        key[i] = '' + record[field];
-        if (prune) delete record[field];
-    }
-    return key;
 }
 
 process.stdin
