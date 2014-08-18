@@ -30,23 +30,15 @@ function getKey(record) {
     return key;
 }
 
-var keyStreams = LRU({
-    max: 200,
-    dispose: function(key, stream) {stream.close();}
-});
-
 var ensuredDirs = {};
 
 function outStream(key, done) {
-    var stream = keyStreams.get(key);
-    if (stream !== undefined) return done(null, stream);
     var keyPath = path.join.apply(path, key);
     var outPath = path.join(outBase, keyPath);
     var dirPath = path.dirname(outPath);
     var finish = under(done, function() {
         ensuredDirs[dirPath] = true;
         stream = fs.createWriteStream(outPath, {flags: 'a'});
-        keyStreams.set(key, stream);
         retrun stream;
     });
     if (ensuredDirs[dirPath]) {
@@ -56,13 +48,22 @@ function outStream(key, done) {
     }
 }
 
+var keyStreams = LRU({
+    max: 200,
+    dispose: function(key, stream) {stream.close();}
+});
+
 process.stdin
     .pipe(linestream())
     .pipe(through2.obj(function(line, enc, done) {
         safeParse(line, under(done, this.push.bind(this)));
     }))
     .pipe(through2.obj(function(record, enc, done) {
-        outStream(getKey(record), under(done, function(stream) {
+        var key = getKey(record);
+        var stream = keyStreams.get(key);
+        if (stream !== undefined) return done(null, stream);
+        outStream(key, under(done, function(stream) {
+            keyStreams.set(key, stream);
             stream.write(JSON.stringify(record) + '\n');
         }));
     }))
