@@ -67,9 +67,10 @@ var keyStreams = LRU({
 process.stdin
     .pipe(linestream())
     .pipe(through2.obj(function(line, enc, done) {
+        var self = this;
         safeParse(line, under(done, function(record) {
             if (record !== null && record !== undefined) {
-                this.push(record);
+                self.push(record);
             }
         }));
     }))
