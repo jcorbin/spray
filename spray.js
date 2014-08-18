@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 var LRU = require('lru-cache');
 var fs = require('fs');
 var linestream = require('line-stream');
