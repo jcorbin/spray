@@ -30,7 +30,7 @@ function getKey(record) {
     return key;
 }
 
-var outStreams = LRU({
+var keyStreams = LRU({
     max: 200,
     dispose: function(key, stream) {stream.close();}
 });
@@ -38,7 +38,7 @@ var outStreams = LRU({
 var ensuredDirs = {};
 
 function outStream(key, done) {
-    var stream = outStreams.get(key);
+    var stream = keyStreams.get(key);
     if (stream !== undefined) return done(null, stream);
     var keyPath = path.join.apply(path, key);
     var outPath = path.join(outBase, keyPath);
@@ -52,7 +52,7 @@ function outStream(key, done) {
         if (err) return done(err);
         ensuredDirs[dirPath] = true;
         stream = fs.createWriteStream(outPath, {flags: 'a'});
-        outStreams.set(key, stream) ;
+        keyStreams.set(key, stream) ;
         done(null, stream);
     }
 }
