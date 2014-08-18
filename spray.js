@@ -43,35 +43,35 @@ function outStream(key, done) {
     var keyPath = path.join.apply(path, key);
     var outPath = path.join(outBase, keyPath);
     var dirPath = path.dirname(outPath);
+    var finish = under(done, function() {
+        ensuredDirs[dirPath] = true;
+        stream = fs.createWriteStream(outPath, {flags: 'a'});
+        keyStreams.set(key, stream);
+        retrun stream;
+    });
     if (ensuredDirs[dirPath]) {
         finish();
     } else {
         mkdirp(dirPath, finish);
-    }
-    function finish(err) {
-        if (err) return done(err);
-        ensuredDirs[dirPath] = true;
-        stream = fs.createWriteStream(outPath, {flags: 'a'});
-        keyStreams.set(key, stream) ;
-        done(null, stream);
     }
 }
 
 process.stdin
     .pipe(linestream())
     .pipe(through2.obj(function(line, enc, done) {
-        safeParse(line, function(err, record) {
-            if (err) return done(err);
-            this.push(record);
-            done();
-        });
-
+        safeParse(line, under(done, this.push.bind(this)));
     }))
     .pipe(through2.obj(function(record, enc, done) {
-        outStream(getKey(record), function(err, stream) {
-            if (err) return done(err);
+        outStream(getKey(record), under(done, function(stream) {
             stream.write(JSON.stringify(record) + '\n');
-            done();
-        });
+        }));
     }))
     ;
+
+function under(done, func) {
+    return function(err) {
+        if (err) return done(err);
+        var result = func.apply(this, arguments);
+        done(null, result);
+    };
+}
