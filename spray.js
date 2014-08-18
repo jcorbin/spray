@@ -6,6 +6,8 @@ var path = require('path');
 var safeParse = require('safe-json-parse');
 var through2 = require('through2');
 
+var SprayStream = require('./lib/spray_stream');
+
 var args = require('minimist')(process.argv.slice(2), {
     boolean: ['prune'],
     alias: {
@@ -67,16 +69,15 @@ process.stdin
     .pipe(through2.obj(function(line, enc, done) {
         safeParse(line, under(done, this.push.bind(this)));
     }))
-    .pipe(through2.obj(function(record, enc, done) {
+    .pipe(SprayStream(function(record, done) {
         var key = getKey(record);
         var stream = keyStreams.get(key);
         if (stream !== undefined) return done(null, stream);
         openKeyStream(key, under(done, function(stream) {
             stream = wrapStream(stream);
             keyStreams.set(key, stream);
-            stream.write(record);
         }));
-    }))
+    }, {objectMode: true}))
     ;
 
 function under(done, func) {
