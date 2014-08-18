@@ -81,6 +81,7 @@ process.stdin
         openKeyStream(key, under(done, function(stream) {
             stream = wrapStream(stream);
             keyStreams.set(key, stream);
+            return stream;
         }));
     }, {objectMode: true}))
     ;
