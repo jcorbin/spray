@@ -83,7 +83,7 @@ process.stdin
 function under(done, func) {
     return function(err) {
         if (err) return done(err);
-        var result = func.apply(this, arguments);
+        var result = func.apply(this, Array.prototype.slice.call(arguments, 1));
         done(null, result);
     };
 }
